@@ -437,6 +437,8 @@ void mrbc_init_tcb(mrbc_tcb *tcb)
   tcb->state = TASKSTATE_READY;
 }
 
+#define TAG "mrbc"
+
 
 //================================================================
 /*! specify running VM code.
@@ -452,7 +454,14 @@ mrbc_tcb* mrbc_create_task(const uint8_t *vm_code, mrbc_tcb *tcb)
   // allocate Task Control Block
   if( tcb == NULL ) {
     tcb = mrbc_raw_alloc( sizeof(mrbc_tcb) );
-    if( tcb == NULL ) return NULL;	// ENOMEM
+
+    FURI_LOG_I(TAG, "Allocating memory");
+    if( tcb == NULL ) {
+      FURI_LOG_I(TAG, "No memory :(");
+      return NULL;	// ENOMEM
+    }
+
+    FURI_LOG_I(TAG, "Initializing TCB");
 
     mrbc_init_tcb( tcb );
   }
@@ -462,21 +471,27 @@ mrbc_tcb* mrbc_create_task(const uint8_t *vm_code, mrbc_tcb *tcb)
   // assign VM ID
   if( mrbc_vm_open( &tcb->vm ) == NULL ) {
     mrbc_printf("Error: Can't assign VM-ID.\n");
+    FURI_LOG_I(TAG, "Error: Can't assign VM-ID.");
     return NULL;
   }
 
   if( mrbc_load_mrb(&tcb->vm, vm_code) != 0 ) {
     mrbc_printf("Error: Illegal bytecode.\n");
+    FURI_LOG_I(TAG, "Error: Illegal bytecode.");
     mrbc_vm_close( &tcb->vm );
     return NULL;
   }
   if( tcb->state != TASKSTATE_DORMANT ) {
+    FURI_LOG_I(TAG, "Starting VM");
     mrbc_vm_begin( &tcb->vm );
   }
 
   hal_disable_irq();
   q_insert_task(tcb);
   hal_enable_irq();
+
+
+  FURI_LOG_I(TAG, "Returning TCB");
 
   return tcb;
 }
