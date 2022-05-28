@@ -2886,17 +2886,11 @@ void mrbc_vm_end( struct VM *vm )
     mrbc_decref(&vm->exception);
   }
 
-  int n_used = 0;
   int i;
   for( i = 0; i < MAX_REGS_SIZE; i++ ) {
     //mrbc_printf("vm->regs[%d].tt = %d\n", i, mrbc_type(vm->regs[i]));
-    if( mrbc_type(vm->regs[i]) != MRBC_TT_NIL ) n_used = i;
     mrbc_decref_empty(&vm->regs[i]);
   }
-#if defined(MRBC_DEBUG_REGS)
-  mrbc_printf("Finally number of registers used was %d in VM %d.\n",
-	      n_used, vm->vm_id );
-#endif
 
 #if defined(MRBC_ALLOC_VMID)
   mrbc_global_clear_vm_id();

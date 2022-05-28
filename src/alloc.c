@@ -803,7 +803,7 @@ void mrbc_alloc_statistics( struct MRBC_ALLOC_STATISTICS *ret )
 {
   MEMORY_POOL *pool = memory_pool;
   USED_BLOCK *block = BLOCK_TOP(pool);
-  int flag_used_free = IS_USED_BLOCK(block);
+  long unsigned int flag_used_free = IS_USED_BLOCK(block);
 
   ret->total = pool->size;
   ret->used = 0;

@@ -313,12 +313,12 @@ static void c_symbol_all_symbols(struct VM *vm, mrbc_value v[], int argc)
 {
   mrbc_value ret = mrbc_array_new(vm, sym_index_pos);
 
-  int i;
+  unsigned int i;
   for( i = 0; i < sizeof(builtin_symbols) / sizeof(builtin_symbols[0]); i++ ) {
     mrbc_array_push(&ret, &mrbc_symbol_value(i));
   }
 
-  for( i = 0; i < sym_index_pos; i++ ) {
+  for( i = 0; i < (unsigned int)sym_index_pos; i++ ) {
     mrbc_array_push(&ret, &mrbc_symbol_value(i + OFFSET_BUILTIN_SYMBOL));
   }
   SET_RETURN(ret);

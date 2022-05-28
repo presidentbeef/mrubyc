@@ -182,7 +182,7 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len, int 
   uint16_t *ofs_pools = mrbc_irep_tbl_pools(p_irep);
   p = p_irep->pool + 2;
   for( i = 0; i < irep.plen; i++ ) {
-    int siz;
+    int siz = 0;
     *ofs_pools++ = (uint16_t)(p - irep.pool);
     switch( *p++ ) {
     case IREP_TT_STR:

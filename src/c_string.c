@@ -38,7 +38,7 @@ static int is_space( int ch )
 {
   static const char ws[] = " \t\r\n\f\v";	// '\0' on tail
 
-  int i;
+  unsigned int i;
   for( i = 0; i < sizeof(ws); i++ ) {
     if( ch == ws[i] ) return 1;
   }
