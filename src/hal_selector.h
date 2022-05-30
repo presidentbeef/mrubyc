@@ -30,6 +30,9 @@
 #elif defined(MRBC_USE_HAL_RP2040)
 #include "hal_rp2040/hal.h"
 
+#elif defined(MRBC_USE_HAL_FLIPPER)
+#include "hal_flipper/hal.h"
+
 #elif defined(MRBC_USE_HAL_USER_RESERVED)
 #include "hal_user_reserved/hal.h"
 
