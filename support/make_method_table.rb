@@ -82,6 +82,9 @@ def write_file( param )
          end
     file.puts "  .super = #{sp},"
     file.puts "  .method_link = 0,"
+    file.puts "#if defined(MRBC_DEBUG)"
+    file.puts "  .name = \"#{cls[:class]}\","
+    file.puts "#endif"
     if cls[:methods]
       file.puts "  .method_symbols = method_symbols_#{cls[:class]},"
       file.puts "  .method_functions = method_functions_#{cls[:class]},"

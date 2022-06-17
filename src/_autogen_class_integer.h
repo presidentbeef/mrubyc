@@ -63,6 +63,9 @@ struct RBuiltinClass mrbc_class_Integer = {
   .num_builtin_method = sizeof(method_symbols_Integer) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "Integer",
+#endif
   .method_symbols = method_symbols_Integer,
   .method_functions = method_functions_Integer,
 };

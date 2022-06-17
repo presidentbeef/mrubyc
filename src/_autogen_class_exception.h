@@ -17,6 +17,9 @@ struct RBuiltinClass mrbc_class_Exception = {
   .num_builtin_method = sizeof(method_symbols_Exception) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "Exception",
+#endif
   .method_symbols = method_symbols_Exception,
   .method_functions = method_functions_Exception,
 };
@@ -27,6 +30,9 @@ struct RClass mrbc_class_NoMemoryError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(Exception),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "NoMemoryError",
+#endif
 };
 
 /*===== NotImplementedError class =====*/
@@ -35,6 +41,9 @@ struct RClass mrbc_class_NotImplementedError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(Exception),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "NotImplementedError",
+#endif
 };
 
 /*===== StandardError class =====*/
@@ -43,6 +52,9 @@ struct RClass mrbc_class_StandardError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(Exception),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "StandardError",
+#endif
 };
 
 /*===== ArgumentError class =====*/
@@ -51,6 +63,9 @@ struct RClass mrbc_class_ArgumentError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "ArgumentError",
+#endif
 };
 
 /*===== IndexError class =====*/
@@ -59,6 +74,9 @@ struct RClass mrbc_class_IndexError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "IndexError",
+#endif
 };
 
 /*===== NameError class =====*/
@@ -67,6 +85,9 @@ struct RClass mrbc_class_NameError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "NameError",
+#endif
 };
 
 /*===== NoMethodError class =====*/
@@ -75,6 +96,9 @@ struct RClass mrbc_class_NoMethodError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(NameError),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "NoMethodError",
+#endif
 };
 
 /*===== RangeError class =====*/
@@ -83,6 +107,9 @@ struct RClass mrbc_class_RangeError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "RangeError",
+#endif
 };
 
 /*===== RuntimeError class =====*/
@@ -91,6 +118,9 @@ struct RClass mrbc_class_RuntimeError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "RuntimeError",
+#endif
 };
 
 /*===== TypeError class =====*/
@@ -99,6 +129,9 @@ struct RClass mrbc_class_TypeError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "TypeError",
+#endif
 };
 
 /*===== ZeroDivisionError class =====*/
@@ -107,4 +140,7 @@ struct RClass mrbc_class_ZeroDivisionError = {
   .num_builtin_method = 0,
   .super = MRBC_CLASS(StandardError),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "ZeroDivisionError",
+#endif
 };

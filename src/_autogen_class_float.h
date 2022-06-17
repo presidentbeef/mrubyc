@@ -41,6 +41,9 @@ struct RBuiltinClass mrbc_class_Float = {
   .num_builtin_method = sizeof(method_symbols_Float) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "Float",
+#endif
   .method_symbols = method_symbols_Float,
   .method_functions = method_functions_Float,
 };

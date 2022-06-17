@@ -45,6 +45,9 @@ typedef struct RClass {
   int16_t num_builtin_method;	//!< num of built-in method.
   struct RClass *super;		//!< pointer to super class.
   struct RMethod *method_link;	//!< pointer to method link.
+#if defined(MRBC_DEBUG)
+  const char *name;
+#endif
 } mrbc_class;
 typedef struct RClass mrb_class;
 
@@ -59,6 +62,9 @@ struct RBuiltinClass {
   int16_t num_builtin_method;	//!< num of built-in method.
   struct RClass *super;		//!< pointer to super class.
   struct RMethod *method_link;	//!< pointer to method link.
+#if defined(MRBC_DEBUG)
+  const char *name;
+#endif
 
   const mrbc_sym *method_symbols;	//!< built-in method sym-id table.
   const mrbc_func_t *method_functions;	//!< built-in method function table.

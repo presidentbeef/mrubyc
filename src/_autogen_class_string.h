@@ -89,6 +89,9 @@ struct RBuiltinClass mrbc_class_String = {
   .num_builtin_method = sizeof(method_symbols_String) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "String",
+#endif
   .method_symbols = method_symbols_String,
   .method_functions = method_functions_String,
 };

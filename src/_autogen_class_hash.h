@@ -61,6 +61,9 @@ struct RBuiltinClass mrbc_class_Hash = {
   .num_builtin_method = sizeof(method_symbols_Hash) / sizeof(mrbc_sym),
   .super = MRBC_CLASS(Object),
   .method_link = 0,
+#if defined(MRBC_DEBUG)
+  .name = "Hash",
+#endif
   .method_symbols = method_symbols_Hash,
   .method_functions = method_functions_Hash,
 };

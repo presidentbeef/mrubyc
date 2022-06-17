@@ -100,6 +100,9 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
   cls->num_builtin_method = 0;
   cls->super = super ? super : mrbc_class_object;
   cls->method_link = 0;
+#if defined(MRBC_DEBUG)
+  cls->name = name;
+#endif
 
   if( vm && mrbc_type(vm->cur_regs[0]) == MRBC_TT_CLASS ) {
     // For nested class
