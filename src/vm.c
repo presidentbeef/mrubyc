@@ -2414,6 +2414,16 @@ static inline void op_class( mrbc_vm *vm, mrbc_value *regs EXT )
 
   const char *class_name = mrbc_irep_symbol_cstr(vm->cur_irep, b);
   mrbc_class *super = (regs[a+1].tt == MRBC_TT_CLASS) ? regs[a+1].cls : 0;
+  if( super ) {
+    int i;
+    for( i = 1; i < MRBC_TT_MAXVAL; i++ ) {
+      if( super == mrbc_class_tbl[i] ) {
+	mrbc_raise(vm, MRBC_CLASS(NotImplementedError), "Inherit the built-in class is not supported.");
+	return;
+      }
+    }
+  }
+
   mrbc_class *cls = mrbc_define_class(vm, class_name, super);
   if( !cls ) return;		// ENOMEM
 
