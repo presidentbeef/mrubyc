@@ -75,7 +75,7 @@ void (* const mrbc_delfunc[])(mrbc_value *) = {
 int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2)
 {
 #if MRBC_USE_FLOAT
-  mrbc_float d1, d2;
+  mrbc_float_t d1, d2;
 #endif
 
   // if TT_XXX is different
@@ -191,7 +191,7 @@ void mrbc_clear_vm_id(mrbc_value *v)
   @param  base	n base.
   @return	result.
 */
-mrbc_int mrbc_atoi( const char *s, int base )
+mrbc_int_t mrbc_atoi( const char *s, int base )
 {
   int ret = 0;
   int sign = 0;

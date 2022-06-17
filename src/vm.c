@@ -480,7 +480,7 @@ static inline void op_loadineg( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BB();
 
   mrbc_decref(&regs[a]);
-  mrbc_set_integer(&regs[a], -(mrbc_int)b);
+  mrbc_set_integer(&regs[a], -(mrbc_int_t)b);
 }
 
 

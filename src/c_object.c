@@ -544,10 +544,10 @@ static void c_object_sprintf(struct VM *vm, mrbc_value v[], int argc)
 	ret = mrbc_printf_int( &pf, v[i].i, 10);
 #if MRBC_USE_FLOAT
       } else if( mrbc_type(v[i]) == MRBC_TT_FLOAT ) {
-	ret = mrbc_printf_int( &pf, (mrbc_int)v[i].d, 10);
+	ret = mrbc_printf_int( &pf, (mrbc_int_t)v[i].d, 10);
 #endif
       } else if( mrbc_type(v[i]) == MRBC_TT_STRING ) {
-	mrbc_int ival = atol(mrbc_string_cstr(&v[i]));
+	mrbc_int_t ival = atol(mrbc_string_cstr(&v[i]));
 	ret = mrbc_printf_int( &pf, ival, 10 );
       }
       break;

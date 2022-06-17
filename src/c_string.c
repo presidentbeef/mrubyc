@@ -448,7 +448,7 @@ static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_size(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_int size = mrbc_string_size(&v[0]);
+  mrbc_int_t size = mrbc_string_size(&v[0]);
 
   SET_INT_RETURN( size );
 }
@@ -469,7 +469,7 @@ static void c_string_to_i(struct VM *vm, mrbc_value v[], int argc)
     }
   }
 
-  mrbc_int i = mrbc_atoi( mrbc_string_cstr(v), base );
+  mrbc_int_t i = mrbc_atoi( mrbc_string_cstr(v), base );
 
   SET_INT_RETURN( i );
 }
@@ -481,7 +481,7 @@ static void c_string_to_i(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_to_f(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_float d = atof(mrbc_string_cstr(v));
+  mrbc_float_t d = atof(mrbc_string_cstr(v));
 
   SET_FLOAT_RETURN( d );
 }
@@ -655,7 +655,7 @@ static void c_string_empty(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_getbyte(struct VM *vm, mrbc_value v[], int argc)
 {
   int len = mrbc_string_size(&v[0]);
-  mrbc_int idx = mrbc_integer(v[1]);
+  mrbc_int_t idx = mrbc_integer(v[1]);
 
   if( idx >= 0 ) {
     if( idx >= len ) idx = -1;

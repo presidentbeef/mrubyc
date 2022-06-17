@@ -38,23 +38,23 @@ struct IREP;
 
 // mrbc types
 #if defined(MRBC_INT16)
-typedef int16_t mrbc_int;
-typedef uint16_t mrbc_uint;
+typedef int16_t mrbc_int_t;
+typedef uint16_t mrbc_uint_t;
 #elif defined(MRBC_INT64)
-typedef int64_t mrbc_int;
-typedef uint64_t mrbc_uint;
+typedef int64_t mrbc_int_t;
+typedef uint64_t mrbc_uint_t;
 #else
-typedef int32_t mrbc_int;
-typedef uint32_t mrbc_uint;
+typedef int32_t mrbc_int_t;
+typedef uint32_t mrbc_uint_t;
 #endif
-typedef mrbc_int mrb_int;
+typedef mrbc_int_t mrb_int;
 
 #if MRBC_USE_FLOAT == 1
-typedef float mrbc_float;
+typedef float mrbc_float_t;
 #elif MRBC_USE_FLOAT == 2
-typedef double mrbc_float;
+typedef double mrbc_float_t;
 #endif
-typedef mrbc_float mrb_float;
+typedef mrbc_float_t mrb_float;
 
 typedef int16_t mrbc_sym;	//!< mruby/c symbol ID
 typedef void (*mrbc_func_t)(struct VM *vm, struct RObject *v, int argc);
@@ -150,9 +150,9 @@ struct RBasic {
 struct RObject {
   mrbc_vtype tt : 8;
   union {
-    mrbc_int i;			// MRBC_TT_INTEGER, SYMBOL
+    mrbc_int_t i;		// MRBC_TT_INTEGER, SYMBOL
 #if MRBC_USE_FLOAT
-    mrbc_float d;		// MRBC_TT_FLOAT
+    mrbc_float_t d;		// MRBC_TT_FLOAT
 #endif
     struct RBasic *obj;		// use inc/dec ref only.
     struct RClass *cls;		// MRBC_TT_CLASS
@@ -279,13 +279,13 @@ typedef struct RObject mrbc_value;
     v[0].tt = tt;				 \
   } while(0)
 #define SET_INT_RETURN(n) do {	\
-    mrbc_int nnn = (n);		\
+    mrbc_int_t nnn = (n);	\
     mrbc_decref(v);		\
     v[0].tt = MRBC_TT_INTEGER;	\
     v[0].i = nnn;		\
   } while(0)
 #define SET_FLOAT_RETURN(n) do {\
-    mrbc_float nnn = (n);	\
+    mrbc_float_t nnn = (n);	\
     mrbc_decref(v);		\
     v[0].tt = MRBC_TT_FLOAT;	\
     v[0].d = nnn;		\
@@ -313,7 +313,7 @@ extern void (* const mrbc_delfunc[])(mrbc_value *);
 /***** Function prototypes **************************************************/
 int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2);
 void mrbc_clear_vm_id(mrbc_value *v);
-mrbc_int mrbc_atoi(const char *s, int base);
+mrbc_int_t mrbc_atoi(const char *s, int base);
 
 
 /***** Inline functions *****************************************************/

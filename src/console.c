@@ -71,8 +71,8 @@ static int mrbc_printf_sub_output_arg( mrbc_printf_t *pf, va_list *ap )
     ret = mrbc_printf_int( pf, va_arg(*ap, int), 10);
     break;
 
-  case 'D':	// for mrbc_int (see mrbc_print_sub)
-    ret = mrbc_printf_int( pf, va_arg(*ap, mrbc_int), 10);
+  case 'D':	// for mrbc_int_t (see mrbc_print_sub)
+    ret = mrbc_printf_int( pf, va_arg(*ap, mrbc_int_t), 10);
     break;
 
   case 'b':
@@ -663,10 +663,10 @@ int mrbc_printf_bstr( mrbc_printf_t *pf, const char *str, int len, int pad )
   @retval -1	buffer full.
   @note		not terminate ('\0') buffer tail.
 */
-int mrbc_printf_int( mrbc_printf_t *pf, mrbc_int value, unsigned int base )
+int mrbc_printf_int( mrbc_printf_t *pf, mrbc_int_t value, unsigned int base )
 {
   int sign = 0;
-  mrbc_uint v = value;
+  mrbc_uint_t v = value;
   char *pf_p_ini_val = pf->p;
 
   if( value < 0 ) {
@@ -684,7 +684,7 @@ int mrbc_printf_int( mrbc_printf_t *pf, mrbc_int value, unsigned int base )
   }
 
   // create string to temporary buffer
-  char buf[sizeof(mrbc_int) * 8];
+  char buf[sizeof(mrbc_int_t) * 8];
   char *p = buf + sizeof(buf);
 
   do {
@@ -750,7 +750,7 @@ int mrbc_printf_int( mrbc_printf_t *pf, mrbc_int value, unsigned int base )
   @retval -1	buffer full.
   @note		not terminate ('\0') buffer tail.
 */
-int mrbc_printf_bit( mrbc_printf_t *pf, mrbc_int value, int bit )
+int mrbc_printf_bit( mrbc_printf_t *pf, mrbc_int_t value, int bit )
 {
   if( pf->fmt.flag_plus || pf->fmt.flag_space ) {
     return mrbc_printf_int( pf, value, 1 << bit );
@@ -761,14 +761,14 @@ int mrbc_printf_bit( mrbc_printf_t *pf, mrbc_int value, int bit )
   }
   pf->fmt.precision = 0;
 
-  mrbc_int v = value;
+  mrbc_int_t v = value;
   int offset_a = (pf->fmt.type == 'X') ? 'A' - 10 : 'a' - 10;
   int mask = (1 << bit) - 1;	// 0x0f, 0x07, 0x01
   int mchar = mask + ((mask < 10)? '0' : offset_a);
 
   // create string to local buffer
-  char buf[sizeof(mrbc_int) * 8 + 5];
-  assert( sizeof(buf) > (sizeof(mrbc_int) * 8 + 4) );
+  char buf[sizeof(mrbc_int_t) * 8 + 5];
+  assert( sizeof(buf) > (sizeof(mrbc_int_t) * 8 + 4) );
   char *p = buf + sizeof(buf) - 1;
   *p = '\0';
   int n;
