@@ -41,8 +41,6 @@
   </pre>
 */
 
-#if !defined(MRBC_ALLOC_LIBC)
-
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
 //@cond
@@ -52,6 +50,7 @@
 #include <assert.h>
 //@endcond
 
+#if !defined(MRBC_ALLOC_LIBC)
 /***** Local headers ********************************************************/
 #include "alloc.h"
 #include "hal_selector.h"

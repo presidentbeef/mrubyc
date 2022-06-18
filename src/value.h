@@ -54,7 +54,9 @@ typedef float mrbc_float_t;
 #elif MRBC_USE_FLOAT == 2
 typedef double mrbc_float_t;
 #endif
+#if MRBC_USE_FLOAT != 0
 typedef mrbc_float_t mrb_float;
+#endif
 
 typedef int16_t mrbc_sym;	//!< mruby/c symbol ID
 typedef void (*mrbc_func_t)(struct VM *vm, struct RObject *v, int argc);
