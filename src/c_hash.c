@@ -291,7 +291,8 @@ static void c_hash_new(struct VM *vm, mrbc_value v[], int argc)
 static void c_hash_get(struct VM *vm, mrbc_value v[], int argc)
 {
   if( argc != 1 ) {
-    return;	// raise ArgumentError.
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments.");
+    return;
   }
 
   mrbc_value val = mrbc_hash_get(&v[0], &v[1]);
@@ -306,7 +307,8 @@ static void c_hash_get(struct VM *vm, mrbc_value v[], int argc)
 static void c_hash_set(struct VM *vm, mrbc_value v[], int argc)
 {
   if( argc != 2 ) {
-    return;	// raise ArgumentError.
+    mrbc_raise(vm, MRBC_CLASS(ArgumentError), "wrong number of arguments.");
+    return;
   }
 
   mrbc_value *v1 = &v[1];

@@ -25,6 +25,7 @@
 
 /***** Local headers ********************************************************/
 #include "value.h"
+#include "error.h"
 #include "class.h"
 #include "c_string.h"
 #include "console.h"
@@ -227,7 +228,8 @@ static void c_integer_to_s(struct VM *vm, mrbc_value v[], int argc)
   if( argc ) {
     base = mrbc_integer(v[1]);
     if( base < 2 || base > 36 ) {
-      return;	// raise ? ArgumentError
+      mrbc_raisef(vm, MRBC_CLASS(ArgumentError), "invalid radix %d", base);
+      return;
     }
   }
 
