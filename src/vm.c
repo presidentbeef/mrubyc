@@ -527,7 +527,7 @@ static inline void op_loadi32( mrbc_vm *vm, mrbc_value *regs EXT )
   FETCH_BSS();
 
   mrbc_decref(&regs[a]);
-  mrbc_set_integer(&regs[a], (((int32_t)b<<16)+c));
+  mrbc_set_integer(&regs[a], (((int32_t)b<<16)+(int32_t)c));
 }
 
 
