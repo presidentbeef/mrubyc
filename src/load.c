@@ -166,7 +166,7 @@ static mrbc_irep * load_irep_1(struct VM *vm, const uint8_t *bin, int *len, int 
     case IREP_TT_INT32:	siz = 4;	break;
     case IREP_TT_INT64:
 #if !defined(MRBC_INT64)
-      mrbc_raise(vm, MRBC_CLASS(NotImplementedError), "Unsuported int64 (set MRBC_INT64 in vm_config)");
+      mrbc_raise(vm, MRBC_CLASS(NotImplementedError), "Unsupported int64 (set MRBC_INT64 in vm_config)");
 #endif
     case IREP_TT_FLOAT:	siz = 8;	break;
     default:
