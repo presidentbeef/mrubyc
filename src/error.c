@@ -206,9 +206,25 @@ void mrbc_print_exception( const mrbc_value *v )
 }
 
 
-//----------------------------------------------------------------
-// Exception class
-//----------------------------------------------------------------
+//================================================================
+/*! display exception in vm.
+
+  @param  vm	pointer to VM
+*/
+void mrbc_print_vm_exception( const struct VM *vm )
+{
+  if( mrbc_type(vm->exception) != MRBC_TT_EXCEPTION ) return;
+
+  const mrbc_exception *exc = vm->exception.exception;
+  const char *clsname = mrbc_symid_to_str(exc->cls->sym_id);
+
+  mrbc_printf("Exception(vm_id=%d): %s (%s)\n", vm->vm_id,
+	      exc->message ? (const char *)exc->message : clsname, clsname );
+}
+
+
+
+/***** Exception class ******************************************************/
 //================================================================
 /*! (method) new
  */

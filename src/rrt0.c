@@ -467,7 +467,7 @@ mrbc_tcb* mrbc_create_task(const uint8_t *vm_code, mrbc_tcb *tcb)
   }
 
   if( mrbc_load_mrb(&tcb->vm, vm_code) != 0 ) {
-    mrbc_print_exception(&tcb->vm.exception);
+    mrbc_print_vm_exception( &tcb->vm );
     mrbc_vm_close( &tcb->vm );
     return NULL;
   }

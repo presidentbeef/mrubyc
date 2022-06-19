@@ -55,6 +55,7 @@ void mrbc_exception_delete(mrbc_value *value);
 void mrbc_raise(struct VM *vm, struct RClass *exc_cls, const char *msg);
 void mrbc_raisef(struct VM *vm, struct RClass *exc_cls, const char *fstr, ...);
 void mrbc_print_exception(const mrbc_value *v);
+void mrbc_print_vm_exception(const struct VM *vm);
 
 
 /***** Function prototypes **************************************************/

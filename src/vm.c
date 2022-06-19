@@ -384,7 +384,7 @@ void mrbc_vm_end( struct VM *vm )
 #if defined(MRBC_ABORT_BY_EXCEPTION)
     MRBC_ABORT_BY_EXCEPTION(vm);
 #else
-    mrbc_print_exception( &vm->exception );
+    mrbc_print_vm_exception( vm );
     mrbc_decref(&vm->exception);
 #endif
   }
