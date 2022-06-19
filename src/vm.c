@@ -2500,6 +2500,8 @@ static inline void op_def( mrbc_vm *vm, mrbc_value *regs EXT )
       break;
     }
   }
+
+  mrbc_set_symbol(&regs[a], sym_id);
 }
 
 
