@@ -1,6 +1,6 @@
 /*! @file
   @brief
-
+  mruby/c Integer and Float class
 
   <pre>
   Copyright (C) 2015 Kyushu Institute of Technology.
