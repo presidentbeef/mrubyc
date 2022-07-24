@@ -1,3 +1,3 @@
 source "https://rubygems.org"
 
-gem "mrubyc-test", "~> 0.7"
+gem "mrubyc-test", "~> 0.8"
