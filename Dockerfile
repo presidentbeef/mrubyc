@@ -1,4 +1,4 @@
-from ruby:3.0.4-slim
+from ruby:3.1.2-slim
 
 RUN apt update && apt -y upgrade
 RUN apt install -y \
@@ -25,10 +25,11 @@ COPY --chown=mrubyc Gemfile.lock /work/mrubyc/
 
 USER root
 WORKDIR /work/mrubyc
+RUN gem i bundler
 RUN bundle install
 
 USER mrubyc
-ENV CFLAGS="-DMRBC_USE_MATH=1 -DMAX_SYMBOLS_COUNT=500"
+ENV CFLAGS="-DMRBC_USE_MATH=1 -DMAX_SYMBOLS_COUNT=1000"
 
 RUN git clone https://github.com/mruby/mruby /work/mruby
 ARG MRUBY_TAG

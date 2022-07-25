@@ -18,8 +18,7 @@ class ExceptionTest < MrubycTestCase
     begin
       raise "RAISE"
     rescue => e
-      v = e.message  # NOTE: e.message does not work ? 
-      v = "RAISE"
+      v = e.message
     end
     assert_equal("RAISE", v)
   end
@@ -29,10 +28,9 @@ class ExceptionTest < MrubycTestCase
     begin
       raise StandardError
     rescue => e
-      v = e.message  # NOTE: e.message does not work ? 
-      v = "RAISE"
+      v = e.message
     end
-    assert_equal("RAISE", v)
+    assert_equal("StandardError", v)
   end
 
   def test_exception_ensure
@@ -60,11 +58,24 @@ class ExceptionTest < MrubycTestCase
     assert(!bad)
   end
 
-  def test_e_message
-    begin
+  description "assert_raise can simply identify an exception class"
+  def name_error_case
+    assert_raise(NameError) do
+      NoExistClass.new
+    end
+  end
+
+  description "assert_raise also accepts an instance of an exception class to check its message"
+  def argument_error_new_case
+    assert_raise(ArgumentError.new("wrong number of arguments (expected 0..1)")) do
       String.new("1", "2")
-    rescue => e
-      assert_equal "wrong number of arguments (expected 0..1)", e.message
+    end
+  end
+
+  description "assert_raise accepts multiple parameters and asserts true in 'OR condition'"
+  def asserts_among_multiple_exceptions_case
+    assert_raise(NameError, ArgumentError.new("wrong number of arguments (expected 0..1)")) do
+      String.new("1", "2")
     end
   end
 
