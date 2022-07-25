@@ -60,4 +60,12 @@ class ExceptionTest < MrubycTestCase
     assert(!bad)
   end
 
+  def test_e_message
+    begin
+      String.new("1", "2")
+    rescue => e
+      assert_equal "wrong number of arguments (expected 0..1)", e.message
+    end
+  end
+
 end
