@@ -489,6 +489,18 @@ static void c_string_to_f(struct VM *vm, mrbc_value v[], int argc)
 
 
 //================================================================
+/*! (method) to_s
+*/
+static void c_string_to_s(struct VM *vm, mrbc_value v[], int argc)
+{
+  if( v[0].tt == MRBC_TT_CLASS ) {
+    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    return;
+  }
+}
+
+
+//================================================================
 /*! (method) <<
 */
 static void c_string_append(struct VM *vm, mrbc_value v[], int argc)
@@ -1246,7 +1258,7 @@ static void c_string_include(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "size",	c_string_size )
   METHOD( "length",	c_string_size )
   METHOD( "to_i",	c_string_to_i )
-  METHOD( "to_s",	c_ineffect )
+  METHOD( "to_s",	c_string_to_s )
   METHOD( "<<",		c_string_append )
   METHOD( "[]",		c_string_slice )
   METHOD( "[]=",	c_string_insert )
