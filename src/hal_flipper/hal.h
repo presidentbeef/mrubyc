@@ -28,7 +28,7 @@
 # define hal_init()        ((void)0)
 # define hal_enable_irq()  ((void)0)
 # define hal_disable_irq() ((void)0)
-# define hal_idle_cpu()    (furi_hal_delay_ms(MRBC_TICK_UNIT), mrbc_tick())
+# define hal_idle_cpu()    (furi_delay_ms(MRBC_TICK_UNIT), mrbc_tick())
 
 /***** Typedefs *************************************************************/
 /***** Global variables *****************************************************/
