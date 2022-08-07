@@ -34,6 +34,8 @@
 /***** Global variables *****************************************************/
 /***** Function prototypes **************************************************/
 inline static int hal_write(int fd, const void *buf, int nbytes) {
+  UNUSED(fd);
+  UNUSED(nbytes);
   return printf(buf);
 }
 
