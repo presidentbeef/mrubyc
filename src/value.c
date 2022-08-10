@@ -14,12 +14,15 @@
 
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
 #include <string.h>
 #include <assert.h>
+//@endcond
 
 /***** Local headers ********************************************************/
 #include "value.h"
+#include "symbol.h"
 #include "class.h"
 #include "error.h"
 #include "c_string.h"
@@ -42,6 +45,7 @@
   @see mrbc_vtype in value.h
 */
 void (* const mrbc_delfunc[])(mrbc_value *) = {
+  0, 0, 0, 0, 0, 0, 0, 0,
   mrbc_instance_delete,		// MRBC_TT_OBJECT    = 8,
   mrbc_proc_delete,		// MRBC_TT_PROC	     = 9,
   mrbc_array_delete,		// MRBC_TT_ARRAY     = 10,
@@ -72,7 +76,7 @@ void (* const mrbc_delfunc[])(mrbc_value *) = {
 int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2)
 {
 #if MRBC_USE_FLOAT
-  mrbc_float d1, d2;
+  mrbc_float_t d1, d2;
 #endif
 
   // to compare Symbols
@@ -113,14 +117,14 @@ int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2)
   case MRBC_TT_INTEGER:
     return mrbc_integer(*v1) - mrbc_integer(*v2);
 
-  case MRBC_TT_SYMBOL:
-    str1 = mrbc_symid_to_str(mrbc_symbol(*v1));
-    str2 = mrbc_symid_to_str(mrbc_symbol(*v2));
-    diff = strlen(str1) - strlen(str2);
-    len = diff < 0 ? strlen(str1) : strlen(str2);
-    res = memcmp(str1, str2, len);
-    if( res != 0 ) return res;
-    return diff;
+  case MRBC_TT_SYMBOL: {
+    const char *str1 = mrbc_symid_to_str(mrbc_symbol(*v1));
+    const char *str2 = mrbc_symid_to_str(mrbc_symbol(*v2));
+    int diff = strlen(str1) - strlen(str2);
+    int len = diff < 0 ? strlen(str1) : strlen(str2);
+    int res = memcmp(str1, str2, len);
+    return (res != 0) ? res : diff;
+  }
 
 #if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:
@@ -192,7 +196,7 @@ void mrbc_clear_vm_id(mrbc_value *v)
   @param  base	n base.
   @return	result.
 */
-mrbc_int mrbc_atoi( const char *s, int base )
+mrbc_int_t mrbc_atoi( const char *s, int base )
 {
   int ret = 0;
   int sign = 0;

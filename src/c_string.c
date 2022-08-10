@@ -3,30 +3,43 @@
   mruby/c String class
 
   <pre>
-  Copyright (C) 2015-2021 Kyushu Institute of Technology.
-  Copyright (C) 2015-2021 Shimane IT Open-Innovation Center.
+  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 
   This file is distributed under BSD 3-Clause License.
 
   </pre>
 */
 
+/***** Feature test switches ************************************************/
+/***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
+//@endcond
 
-#include "value.h"
-#include "vm.h"
+/***** Local headers ********************************************************/
 #include "alloc.h"
-#include "class.h"
+#include "value.h"
 #include "symbol.h"
-#include "c_array.h"
+#include "class.h"
 #include "c_string.h"
+#include "c_array.h"
+#include "vm.h"
 #include "console.h"
 
 
+/***** Constat values *******************************************************/
+/***** Macros ***************************************************************/
+/***** Typedefs *************************************************************/
+/***** Function prototypes **************************************************/
+/***** Local variables ******************************************************/
+/***** Global variables *****************************************************/
+/***** Signal catching functions ********************************************/
+/***** Local functions ******************************************************/
 #if MRBC_USE_STRING
 //================================================================
 /*! white space character test
@@ -46,6 +59,7 @@ static int is_space( int ch )
 }
 
 
+/***** Global functions *****************************************************/
 //================================================================
 /*! constructor
 
@@ -363,11 +377,11 @@ int mrbc_string_chomp(mrbc_value *src)
 static void c_string_new(struct VM *vm, mrbc_value v[], int argc)
 {
   if (argc == 1 && mrbc_type(v[1]) != MRBC_TT_STRING) {
-    mrbc_print("TypeError\n");	// raise? TypeError
+    mrbc_raise( vm, MRBC_CLASS(TypeError), "no implicit conversion into String");
     return;
   }
   if (argc > 1) {
-    mrbc_print("Wrong number of arguments (expected 0..1)\n"); // raise? ArgumentError
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), "wrong number of arguments (expected 0..1)");
     return;
   }
 
@@ -387,7 +401,7 @@ static void c_string_new(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_add(struct VM *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[1]) != MRBC_TT_STRING ) {
-    mrbc_print("Not support STRING + Other\n");
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
     return;
   }
 
@@ -403,17 +417,17 @@ static void c_string_add(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[1]) != MRBC_TT_INTEGER ) {
-    mrbc_print("TypeError\n");	// raise?
+    mrbc_raise( vm, MRBC_CLASS(TypeError), "no implicit conversion into String");
     return;
   }
 
   if( v[1].i < 0 ) {
-    mrbc_printf("ArgumentError\n");	// raise?
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), "negative argument");
     return;
   }
 
   mrbc_value value = mrbc_string_new(vm, NULL,
-				    mrbc_string_size(&v[0]) * v[1].i);
+			mrbc_string_size(&v[0]) * mrbc_integer(v[1]));
   if( value.string == NULL ) return;		// ENOMEM
 
   uint8_t *p = value.string->data;
@@ -434,7 +448,7 @@ static void c_string_mul(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_size(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_int size = mrbc_string_size(&v[0]);
+  mrbc_int_t size = mrbc_string_size(&v[0]);
 
   SET_INT_RETURN( size );
 }
@@ -450,11 +464,12 @@ static void c_string_to_i(struct VM *vm, mrbc_value v[], int argc)
   if( argc ) {
     base = v[1].i;
     if( base < 2 || base > 36 ) {
-      return;	// raise ? ArgumentError
+      mrbc_raise( vm, MRBC_CLASS(ArgumentError), "invalid radix");
+      return;
     }
   }
 
-  mrbc_int i = mrbc_atoi( mrbc_string_cstr(v), base );
+  mrbc_int_t i = mrbc_atoi( mrbc_string_cstr(v), base );
 
   SET_INT_RETURN( i );
 }
@@ -466,11 +481,23 @@ static void c_string_to_i(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_string_to_f(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_float d = atof(mrbc_string_cstr(v));
+  mrbc_float_t d = atof(mrbc_string_cstr(v));
 
   SET_FLOAT_RETURN( d );
 }
 #endif
+
+
+//================================================================
+/*! (method) to_s
+*/
+static void c_string_to_s(struct VM *vm, mrbc_value v[], int argc)
+{
+  if( v[0].tt == MRBC_TT_CLASS ) {
+    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    return;
+  }
+}
 
 
 //================================================================
@@ -504,8 +531,8 @@ static void c_string_slice(struct VM *vm, mrbc_value v[], int argc)
 
   // other case
   } else {
-    mrbc_print("Not support such case in String#[].\n");
-    goto RETURN_NIL;
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
+    return;
   }
 
   if( pos < 0 ) pos += target_len;
@@ -557,7 +584,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
     other cases
   */
   else {
-    mrbc_print("Not support\n");
+    mrbc_raise( vm, MRBC_CLASS(TypeError), "Not supprted." );
     return;
   }
 
@@ -566,7 +593,7 @@ static void c_string_insert(struct VM *vm, mrbc_value v[], int argc)
   if( nth < 0 ) nth = len1 + nth;               // adjust to positive number.
   if( len > len1 - nth ) len = len1 - nth;
   if( nth < 0 || nth > len1 || len < 0) {
-    mrbc_print("IndexError\n");  // raise?
+    mrbc_raisef( vm, MRBC_CLASS(IndexError), "index %d out of string", nth );
     return;
   }
 
@@ -640,7 +667,7 @@ static void c_string_empty(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_getbyte(struct VM *vm, mrbc_value v[], int argc)
 {
   int len = mrbc_string_size(&v[0]);
-  mrbc_int idx = mrbc_integer(v[1]);
+  mrbc_int_t idx = mrbc_integer(v[1]);
 
   if( idx >= 0 ) {
     if( idx >= len ) idx = -1;
@@ -672,7 +699,8 @@ static void c_string_index(struct VM *vm, mrbc_value v[], int argc)
     if( offset < 0 ) goto NIL_RETURN;
 
   } else {
-    goto NIL_RETURN;	// raise? ArgumentError
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
+    return;
   }
 
   index = mrbc_string_index(&v[0], &v[1], offset);
@@ -742,8 +770,8 @@ static void c_string_slice_self(struct VM *vm, mrbc_value v[], int argc)
 
   // other case
   } else {
-    mrbc_print("Not support such case in String#slice!.\n");
-    goto RETURN_NIL;
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
+    return;
   }
 
   if( pos < 0 ) pos += target_len;
@@ -782,7 +810,7 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
   int limit = 0;
   if( argc >= 2 ) {
     if( mrbc_type(v[2]) != MRBC_TT_INTEGER ) {
-      mrbc_print("TypeError\n");	// raise?
+      mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
       return;
     }
     limit = v[2].i;
@@ -794,7 +822,7 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
   }
 
   // check separator parameter.
-  mrb_value sep = (argc == 0) ? mrbc_string_new_cstr(vm, " ") : v[1];
+  mrbc_value sep = (argc == 0) ? mrbc_string_new_cstr(vm, " ") : v[1];
   switch( mrbc_type(sep) ) {
   case MRBC_TT_NIL:
     sep = mrbc_string_new_cstr(vm, " ");
@@ -804,7 +832,7 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
     break;
 
   default:
-    mrbc_print("TypeError\n");		// raise?
+    mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
     return;
   }
 
@@ -855,7 +883,7 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
   SPLIT_ITEM:
     if( pos < 0 ) len = mrbc_string_size(&v[0]) - offset;
 
-    mrb_value v1 = mrbc_string_new(vm, mrbc_string_cstr(&v[0]) + offset, len);
+    mrbc_value v1 = mrbc_string_new(vm, mrbc_string_cstr(&v[0]) + offset, len);
     mrbc_array_push( &ret, &v1 );
 
     if( pos < 0 ) break;
@@ -868,7 +896,7 @@ static void c_string_split(struct VM *vm, mrbc_value v[], int argc)
       int idx = mrbc_array_size(&ret) - 1;
       if( idx < 0 ) break;
 
-      mrb_value v1 = mrbc_array_get( &ret, idx );
+      mrbc_value v1 = mrbc_array_get( &ret, idx );
       if( mrbc_string_size(&v1) != 0 ) break;
 
       mrbc_array_remove(&ret, idx);
@@ -995,7 +1023,7 @@ static void tr_free_pattern( struct tr_pattern *pat )
   }
 }
 
-static struct tr_pattern * tr_parse_pattern( struct VM *vm, const mrb_value *v_pattern, int flag_reverse_enable )
+static struct tr_pattern * tr_parse_pattern( struct VM *vm, const mrbc_value *v_pattern, int flag_reverse_enable )
 {
   const char *pattern = mrbc_string_cstr( v_pattern );
   int pattern_length = mrbc_string_size( v_pattern );
@@ -1102,7 +1130,7 @@ static int tr_main( struct VM *vm, mrbc_value v[], int argc )
 {
   if( !(argc == 2 && mrbc_type(v[1]) == MRBC_TT_STRING &&
 	             mrbc_type(v[2]) == MRBC_TT_STRING)) {
-    mrbc_print("ArgumentError\n");	// raise?
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
     return -1;
   }
 
@@ -1140,7 +1168,7 @@ static int tr_main( struct VM *vm, mrbc_value v[], int argc )
 
 static void c_string_tr(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrb_value ret = mrbc_string_dup( vm, &v[0] );
+  mrbc_value ret = mrbc_string_dup( vm, &v[0] );
   SET_RETURN( ret );
   tr_main(vm, v, argc);
 }
@@ -1165,7 +1193,7 @@ static void c_string_tr_self(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_start_with(struct VM *vm, mrbc_value v[], int argc)
 {
   if( !(argc == 1 && mrbc_type(v[1]) == MRBC_TT_STRING)) {
-    mrbc_print("ArgumentError\n");	// raise?
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
     return;
   }
 
@@ -1187,7 +1215,7 @@ static void c_string_start_with(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_end_with(struct VM *vm, mrbc_value v[], int argc)
 {
   if( !(argc == 1 && mrbc_type(v[1]) == MRBC_TT_STRING)) {
-    mrbc_print("ArgumentError\n");	// raise?
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
     return;
   }
 
@@ -1210,7 +1238,7 @@ static void c_string_end_with(struct VM *vm, mrbc_value v[], int argc)
 static void c_string_include(struct VM *vm, mrbc_value v[], int argc)
 {
   if( !(argc == 1 && mrbc_type(v[1]) == MRBC_TT_STRING)) {
-    mrbc_print("ArgumentError\n");	// raise?
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
     return;
   }
 
@@ -1222,7 +1250,7 @@ static void c_string_include(struct VM *vm, mrbc_value v[], int argc)
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("String")
-  FILE("method_table_string.h")
+  FILE("_autogen_class_string.h")
 
   METHOD( "new",	c_string_new )
   METHOD( "+",		c_string_add )
@@ -1230,7 +1258,7 @@ static void c_string_include(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "size",	c_string_size )
   METHOD( "length",	c_string_size )
   METHOD( "to_i",	c_string_to_i )
-  METHOD( "to_s",	c_ineffect )
+  METHOD( "to_s",	c_string_to_s )
   METHOD( "<<",		c_string_append )
   METHOD( "[]",		c_string_slice )
   METHOD( "[]=",	c_string_insert )
@@ -1264,7 +1292,7 @@ static void c_string_include(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "to_f",	c_string_to_f )
 #endif
 */
-#include "method_table_string.h"
+#include "_autogen_class_string.h"
 
 
 #endif // MRBC_USE_STRING

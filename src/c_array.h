@@ -14,6 +14,13 @@
 #ifndef MRBC_SRC_C_ARRAY_H_
 #define MRBC_SRC_C_ARRAY_H_
 
+/***** Feature test switches ************************************************/
+/***** System headers *******************************************************/
+//@cond
+#include <stdint.h>
+//@endcond
+
+/***** Local headers ********************************************************/
 #include "alloc.h"
 #include "value.h"
 
@@ -21,20 +28,27 @@
 extern "C" {
 #endif
 
+/***** Constat values *******************************************************/
+/***** Macros ***************************************************************/
+/***** Typedefs *************************************************************/
 //================================================================
 /*!@brief
-  Define Array handle.
+  Array object.
+
+  @extends RBasic
 */
 typedef struct RArray {
   MRBC_OBJECT_HEADER;
 
   uint16_t data_size;	//!< data buffer size.
-  uint16_t n_stored;	//!< # of stored.
+  uint16_t n_stored;	//!< num of stored.
   mrbc_value *data;	//!< pointer to allocated memory.
 
 } mrbc_array;
 
 
+/***** Global variables *****************************************************/
+/***** Function prototypes **************************************************/
 mrbc_value mrbc_array_new(struct VM *vm, int size);
 void mrbc_array_delete(mrbc_value *ary);
 void mrbc_array_clear_vm_id(mrbc_value *ary);
@@ -55,6 +69,7 @@ mrbc_value mrbc_array_dup(struct VM *vm, const mrbc_value *ary);
 mrbc_value mrbc_array_divide(struct VM *vm, mrbc_value *src, int pos);
 
 
+/***** Inline functions *****************************************************/
 //================================================================
 /*! get size
 */

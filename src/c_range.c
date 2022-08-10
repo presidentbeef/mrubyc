@@ -3,22 +3,39 @@
   mruby/c Range class
 
   <pre>
-  Copyright (C) 2015-2021 Kyushu Institute of Technology.
-  Copyright (C) 2015-2021 Shimane IT Open-Innovation Center.
+  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 
   This file is distributed under BSD 3-Clause License.
 
   </pre>
 */
 
+
+/***** Feature test switches ************************************************/
+/***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
-#include "value.h"
+//@endcond
+
+/***** Local headers ********************************************************/
 #include "alloc.h"
+#include "value.h"
+#include "symbol.h"
 #include "class.h"
-#include "c_range.h"
 #include "c_string.h"
+#include "c_range.h"
 #include "console.h"
 
+/***** Constat values *******************************************************/
+/***** Macros ***************************************************************/
+/***** Typedefs *************************************************************/
+/***** Function prototypes **************************************************/
+/***** Local variables ******************************************************/
+/***** Global variables *****************************************************/
+/***** Signal catching functions ********************************************/
+/***** Local functions ******************************************************/
+/***** Global functions *****************************************************/
 
 //================================================================
 /*! constructor
@@ -155,10 +172,15 @@ static void c_range_exclude_end(struct VM *vm, mrbc_value v[], int argc)
 
 #if MRBC_USE_STRING
 //================================================================
-/*! (method) inspect
+/*! (method) inspect, to_s
 */
 static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( v[0].tt == MRBC_TT_CLASS ) {
+    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    return;
+  }
+
   mrbc_value ret = mrbc_string_new(vm, NULL, 0);
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
@@ -183,7 +205,7 @@ static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("Range")
-  FILE("method_table_range.h")
+  FILE("_autogen_class_range.h")
 
   METHOD("===",		c_range_equal3 )
   METHOD("first",	c_range_first )
@@ -194,4 +216,4 @@ static void c_range_inspect(struct VM *vm, mrbc_value v[], int argc)
   METHOD("to_s",	c_range_inspect )
 #endif
 */
-#include "method_table_range.h"
+#include "_autogen_class_range.h"

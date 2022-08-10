@@ -3,8 +3,8 @@
   Class related functions.
 
   <pre>
-  Copyright (C) 2015-2021 Kyushu Institute of Technology.
-  Copyright (C) 2015-2021 Shimane IT Open-Innovation Center.
+  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 
   This file is distributed under BSD 3-Clause License.
 
@@ -16,8 +16,12 @@
 
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
-/***** Local headers ********************************************************/
+//@cond
 #include "vm_config.h"
+#include <stdint.h>
+//@endcond
+
+/***** Local headers ********************************************************/
 #include "value.h"
 #include "keyvalue.h"
 #include "error.h"
@@ -33,27 +37,34 @@ extern "C" {
 
 /***** Typedefs *************************************************************/
 //================================================================
-/*! mruby/c class object.
+/*!@brief
+  Class object.
 */
 typedef struct RClass {
   mrbc_sym sym_id;		//!< class name's symbol ID
   int16_t num_builtin_method;	//!< num of built-in method.
-#ifdef MRBC_DEBUG
-  const char *names;		// for debug. delete soon.
-#endif
   struct RClass *super;		//!< pointer to super class.
   struct RMethod *method_link;	//!< pointer to method link.
+#if defined(MRBC_DEBUG)
+  const char *name;
+#endif
 } mrbc_class;
 typedef struct RClass mrb_class;
 
+//================================================================
+/*!@brief
+  Built-in class object.
+
+  @extends RClass
+*/
 struct RBuiltinClass {
   mrbc_sym sym_id;		//!< class name's symbol ID
   int16_t num_builtin_method;	//!< num of built-in method.
-#ifdef MRBC_DEBUG
-  const char *names;		// for debug. delete soon.
-#endif
   struct RClass *super;		//!< pointer to super class.
   struct RMethod *method_link;	//!< pointer to method link.
+#if defined(MRBC_DEBUG)
+  const char *name;
+#endif
 
   const mrbc_sym *method_symbols;	//!< built-in method sym-id table.
   const mrbc_func_t *method_functions;	//!< built-in method function table.
@@ -61,7 +72,10 @@ struct RBuiltinClass {
 
 
 //================================================================
-/*! mruby/c instance object.
+/*!@brief
+  Instance object.
+
+  @extends RBasic
 */
 typedef struct RInstance {
   MRBC_OBJECT_HEADER;
@@ -75,7 +89,10 @@ typedef struct RInstance mrb_instance;
 
 
 //================================================================
-/*! mruby/c proc object.
+/*!@brief
+  Proc object.
+
+  @extends RBasic
 */
 typedef struct RProc {
   MRBC_OBJECT_HEADER;
@@ -83,13 +100,15 @@ typedef struct RProc {
   struct CALLINFO *callinfo;
   struct CALLINFO *callinfo_self;
   struct IREP *irep;
+  mrbc_value ret_val;
 
 } mrbc_proc;
 typedef struct RProc mrb_proc;
 
 
 //================================================================
-/*! Method management structure.
+/*!@brief
+  Method management structure.
 */
 typedef struct RMethod {
   uint8_t type;		//!< M:OP_DEF or OP_ALIAS, m:mrblib or define_method()
@@ -123,6 +142,7 @@ extern struct RBuiltinClass mrbc_class_Hash;
 extern struct RBuiltinClass mrbc_class_Math;
 extern struct RBuiltinClass mrbc_class_Exception;
 extern struct RClass mrbc_class_NoMemoryError;
+extern struct RClass mrbc_class_NotImplementedError;
 extern struct RClass mrbc_class_StandardError;
 extern struct RClass mrbc_class_ArgumentError;
 extern struct RClass mrbc_class_IndexError;
@@ -148,11 +168,12 @@ void mrbc_instance_clear_vm_id(mrbc_value *v);
 mrbc_value mrbc_proc_new(struct VM *vm, void *irep);
 void mrbc_proc_delete(mrbc_value *val);
 void mrbc_proc_clear_vm_id(mrbc_value *v);
-int mrbc_obj_is_kind_of(const mrbc_value *obj, const mrb_class *cls);
+int mrbc_obj_is_kind_of(const mrbc_value *obj, const mrbc_class *cls);
 mrbc_method *mrbc_find_method(mrbc_method *r_method, mrbc_class *cls, mrbc_sym sym_id);
 mrbc_class *mrbc_get_class_by_name(const char *name);
 mrbc_value mrbc_send(struct VM *vm, mrbc_value *v, int reg_ofs, mrbc_value *recv, const char *method_name, int argc, ...);
 void c_ineffect(struct VM *vm, mrbc_value v[], int argc);
+int mrbc_run_mrblib(const void *bytecode);
 void mrbc_init_class(void);
 
 
@@ -169,7 +190,7 @@ static inline mrbc_class *find_class_by_object(const mrbc_value *obj)
   assert( mrbc_type(*obj) >= 0 );
   assert( mrbc_type(*obj) <= MRBC_TT_MAXVAL );
 
-  mrbc_class *cls = mrbc_class_tbl[ obj->tt ];
+  mrbc_class *cls = mrbc_class_tbl[ mrbc_type(*obj) ];
   if( !cls ) {
     switch( mrbc_type(*obj) ) {
     case MRBC_TT_CLASS:		cls = obj->cls;			break;

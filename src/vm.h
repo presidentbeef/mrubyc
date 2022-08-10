@@ -18,8 +18,13 @@
 
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
-/***** Local headers ********************************************************/
+//@cond
 #include "vm_config.h"
+#include <stdint.h>
+//@endcond
+
+
+/***** Local headers ********************************************************/
 #include "value.h"
 #include "class.h"
 
@@ -38,13 +43,13 @@ typedef struct IREP {
   uint8_t type[2];		//!< set "RP" for debug.
 #endif
 
-  uint16_t nlocals;		//!< # of local variables
-  uint16_t nregs;		//!< # of register variables
-  uint16_t rlen;		//!< # of child IREP blocks
-  uint16_t clen;		//!< # of catch handlers
-  uint16_t ilen;		//!< # of bytes in OpCode
-  uint16_t plen;		//!< # of pools
-  uint16_t slen;		//!< # of symbols
+  uint16_t nlocals;		//!< num of local variables
+  uint16_t nregs;		//!< num of register variables
+  uint16_t rlen;		//!< num of child IREP blocks
+  uint16_t clen;		//!< num of catch handlers
+  uint32_t ilen;		//!< num of bytes in OpCode
+  uint16_t plen;		//!< num of pools
+  uint16_t slen;		//!< num of symbols
   uint16_t ofs_ireps;		//!< offset of data->tbl_ireps. (32bit aligned)
 
   const uint8_t *inst;		//!< pointer to instruction in RITE binary
@@ -113,7 +118,9 @@ typedef struct CALLINFO {
   mrbc_class *own_class;	//!< class that owns method.
   mrbc_sym method_id;		//!< called method ID.
   uint8_t reg_offset;		//!< register offset after call.
-  uint8_t n_args;		//!< # of arguments.
+  uint8_t n_args;		//!< num of arguments.
+  uint8_t is_called_super;	//!< this is called by op_super.
+
 } mrbc_callinfo;
 typedef struct CALLINFO mrb_callinfo;
 
@@ -124,22 +131,25 @@ typedef struct CALLINFO mrb_callinfo;
 */
 typedef struct VM {
 #if defined(MRBC_DEBUG)
-  char type[2];			// set "VM" for debug
+  char type[2];				// set "VM" for debug
 #endif
-  uint8_t vm_id;		//!< vm_id : 1..MAX_VM_COUNT
+  uint8_t vm_id;			//!< vm_id : 1..MAX_VM_COUNT
   volatile int8_t flag_preemption;
-  int flag_need_memfree : 1;
-  int flag_stop : 1;
-  int flag_permanence : 1;
+  unsigned int flag_need_memfree : 1;
+  unsigned int flag_stop : 1;
+  unsigned int flag_permanence : 1;
 
-  mrbc_irep       *top_irep;	//!< IREP tree top.
-  const mrbc_irep *cur_irep;	//!< IREP currently running.
-  const uint8_t   *inst;	//!< instruction pointer
-  mrbc_value	  *cur_regs;	//!< Current register pointer.
-  mrbc_class      *target_class;  //!< Target class
-  mrbc_callinfo	  *callinfo_tail; //!< Last point of CALLINFO link.
+  uint16_t	  regs_size;		//!< size of regs[]
 
-  mrbc_value	  exception;	//!< Raised exception or nil.
+  mrbc_irep       *top_irep;		//!< IREP tree top.
+  const mrbc_irep *cur_irep;		//!< IREP currently running.
+  const uint8_t   *inst;		//!< Instruction pointer.
+  mrbc_value	  *cur_regs;		//!< Current register top.
+  mrbc_class      *target_class;	//!< Target class.
+  mrbc_callinfo	  *callinfo_tail;	//!< Last point of CALLINFO link.
+  mrbc_proc	  *ret_blk;		//!< Return block.
+
+  mrbc_value	  exception;		//!< Raised exception or nil.
   mrbc_value      regs[MAX_REGS_SIZE];
 } mrbc_vm;
 typedef struct VM mrb_vm;
@@ -305,7 +315,6 @@ static inline int64_t bin_to_int64( const void *s )
 
 }
 #endif
-
 
 //================================================================
 /*! Get double (64bit) value from memory.

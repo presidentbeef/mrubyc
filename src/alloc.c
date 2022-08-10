@@ -1,6 +1,6 @@
 /*! @file
   @brief
-  mrubyc memory management.
+  mruby/c memory management.
 
   <pre>
   Copyright (C) 2015-2022 Kyushu Institute of Technology.
@@ -41,20 +41,19 @@
   </pre>
 */
 
-#if !defined(MRBC_ALLOC_LIBC)
-
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+//@endcond
 
+#if !defined(MRBC_ALLOC_LIBC)
 /***** Local headers ********************************************************/
-#include "vm.h"
 #include "alloc.h"
 #include "hal_selector.h"
-#include "console.h"
 
 /***** Constant values ******************************************************/
 /*
@@ -271,7 +270,7 @@ static inline int nlz8(uint8_t x)
   @param  alloc_size	alloc size
   @retval unsigned int	index of free_blocks
 */
-static unsigned int calc_index(MRBC_ALLOC_MEMSIZE_T alloc_size)
+static inline unsigned int calc_index(MRBC_ALLOC_MEMSIZE_T alloc_size)
 {
   // check overflow
   if( (alloc_size >> (MRBC_ALLOC_FLI_BIT_WIDTH
@@ -414,6 +413,12 @@ void mrbc_init_alloc(void *ptr, unsigned int size)
 {
   assert( MRBC_MIN_MEMORY_BLOCK_SIZE >= sizeof(FREE_BLOCK) );
   assert( MRBC_MIN_MEMORY_BLOCK_SIZE >= (1 << MRBC_ALLOC_IGNORE_LSBS) );
+  /*
+    If you get this assertion, you can change minimum memory block size
+    parameter to `MRBC_MIN_MEMORY_BLOCK_SIZE (1 << MRBC_ALLOC_IGNORE_LSBS)`
+    and #define MRBC_ALLOC_16BIT.
+  */
+
   assert( (sizeof(MEMORY_POOL) & 0x03) == 0 );
   assert( size != 0 );
   assert( size <= (MRBC_ALLOC_MEMSIZE_T)(~0) );
@@ -519,10 +524,11 @@ void * mrbc_raw_alloc(unsigned int size)
   }
 
   // else out of memory
-  static const char msg[] = "Fatal error: Out of memory.\n";
-  hal_write(1, msg, sizeof(msg)-1);
 #if defined(MRBC_OUT_OF_MEMORY)
   MRBC_OUT_OF_MEMORY();
+#else
+  static const char msg[] = "Fatal error: Out of memory.\n";
+  hal_write(1, msg, sizeof(msg)-1);
 #endif
   return NULL;  // ENOMEM
 
@@ -810,6 +816,11 @@ void mrbc_alloc_statistics( struct MRBC_ALLOC_STATISTICS *ret )
   ret->free = 0;
   ret->fragmentation = -1;
 
+  ret->total = pool->size;
+  ret->used = 0;
+  ret->free = 0;
+  ret->fragmentation = -1;
+
   while( block < (USED_BLOCK *)BLOCK_END(pool) ) {
     if( IS_FREE_BLOCK(block) ) {
       ret->free += BLOCK_SIZE(block);
@@ -826,6 +837,7 @@ void mrbc_alloc_statistics( struct MRBC_ALLOC_STATISTICS *ret )
 
 
 #if defined(MRBC_DEBUG)
+#include "console.h"
 //================================================================
 /*! print memory block for debug.
 

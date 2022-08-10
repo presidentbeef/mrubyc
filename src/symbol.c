@@ -3,8 +3,8 @@
   mruby/c Symbol class
 
   <pre>
-  Copyright (C) 2015-2021 Kyushu Institute of Technology.
-  Copyright (C) 2015-2021 Shimane IT Open-Innovation Center.
+  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 
   This file is distributed under BSD 3-Clause License.
 
@@ -13,21 +13,21 @@
 
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
 #include <stdint.h>
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
+//@endcond
 
 /***** Local headers ********************************************************/
 #define MRBC_DEFINE_SYMBOL_TABLE
-#include "symbol.h"
+#include "_autogen_builtin_symbol.h"
 #undef MRBC_DEFINE_SYMBOL_TABLE
-#include "value.h"
-#include "vm.h"
 #include "alloc.h"
+#include "value.h"
 #include "class.h"
-#include "c_object.h"
 #include "c_string.h"
 #include "c_array.h"
 #include "console.h"
@@ -168,11 +168,7 @@ static int search_index( uint16_t hash, const char *str )
 */
 static int add_index( uint16_t hash, const char *str )
 {
-  // check overflow.
-  if( sym_index_pos >= MAX_SYMBOLS_COUNT ) {
-    mrbc_printf("Overflow MAX_SYMBOLS_COUNT for '%s'\n", str );	// raise?
-    return -1;
-  }
+  if( sym_index_pos >= MAX_SYMBOLS_COUNT ) return -1;	// check overflow.
 
   int idx = sym_index_pos++;
 
@@ -222,7 +218,7 @@ void mrbc_cleanup_symbol(void)
 /*! Convert string to symbol value.
 
   @param  str		Target string.
-  @return mrbc_sym	Symbol value.
+  @return mrbc_sym	Symbol value. -1 if error.
 */
 mrbc_sym mrbc_str_to_symid(const char *str)
 {
@@ -297,7 +293,13 @@ mrbc_value mrbc_symbol_new(struct VM *vm, const char *str)
 
   memcpy(buf, str, size);
   sym_id = add_index( calc_hash(buf), buf );
-  if( sym_id >= 0 ) sym_id += OFFSET_BUILTIN_SYMBOL;
+  if( sym_id < 0 ) {
+    mrbc_raisef(vm, MRBC_CLASS(Exception),
+		"Overflow MAX_SYMBOLS_COUNT for '%s'", str );
+    return mrbc_nil_value();
+  }
+
+  sym_id += OFFSET_BUILTIN_SYMBOL;
 
  DONE:
   return mrbc_symbol_value( sym_id );
@@ -342,6 +344,11 @@ static void c_symbol_inspect(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_symbol_to_s(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( v[0].tt == MRBC_TT_CLASS ) {
+    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    return;
+  }
+
   v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( mrbc_symbol(v[0]) ));
 }
 #endif
@@ -350,7 +357,7 @@ static void c_symbol_to_s(struct VM *vm, mrbc_value v[], int argc)
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("Symbol")
-  FILE("method_table_symbol.h")
+  FILE("_autogen_class_symbol.h")
 
   METHOD( "all_symbols", c_symbol_all_symbols )
 #if MRBC_USE_STRING
@@ -360,7 +367,7 @@ static void c_symbol_to_s(struct VM *vm, mrbc_value v[], int argc)
 #endif
   METHOD( "to_sym", c_ineffect )
 */
-#include "method_table_symbol.h"
+#include "_autogen_class_symbol.h"
 
 
 

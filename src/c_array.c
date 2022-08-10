@@ -11,18 +11,32 @@
   </pre>
 */
 
+/***** Feature test switches ************************************************/
+/***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
 #include <string.h>
 #include <assert.h>
+//@endcond
 
-#include "value.h"
-#include "vm.h"
+/***** Local headers ********************************************************/
 #include "alloc.h"
+#include "value.h"
+#include "symbol.h"
 #include "class.h"
-#include "c_array.h"
 #include "c_string.h"
+#include "c_array.h"
 #include "console.h"
 
+/***** Constat values *******************************************************/
+/***** Macros ***************************************************************/
+/***** Typedefs *************************************************************/
+/***** Function prototypes **************************************************/
+/***** Local variables ******************************************************/
+/***** Global variables *****************************************************/
+/***** Signal catching functions ********************************************/
+/***** Local functions ******************************************************/
+/***** Global functions *****************************************************/
 /*
   function summary
 
@@ -165,7 +179,7 @@ int mrbc_array_set(mrbc_value *ary, int idx, mrbc_value *set_val)
 
   if( idx < 0 ) {
     idx = h->n_stored + idx;
-    if( idx < 0 ) return E_INDEX_ERROR;		// raise?
+    if( idx < 0 ) return E_INDEX_ERROR;
   }
 
   // need resize?
@@ -222,8 +236,7 @@ int mrbc_array_push(mrbc_value *ary, mrbc_value *set_val)
 
   if( h->n_stored >= h->data_size ) {
     int size = h->data_size + 6;
-    if( mrbc_array_resize(ary, size) != 0 )
-      return E_NOMEMORY_ERROR;		// ENOMEM
+    if( mrbc_array_resize(ary, size) != 0 ) return E_NOMEMORY_ERROR; // ENOMEM
   }
 
   h->data[h->n_stored++] = *set_val;
@@ -319,7 +332,7 @@ int mrbc_array_insert(mrbc_value *ary, int idx, mrbc_value *set_val)
 
   if( idx < 0 ) {
     idx = h->n_stored + idx + 1;
-    if( idx < 0 ) return E_INDEX_ERROR;		// raise?
+    if( idx < 0 ) return E_INDEX_ERROR;
   }
 
   // need resize?
@@ -569,7 +582,7 @@ static void c_array_new(struct VM *vm, mrbc_value v[], int argc)
   /*
     other case
   */
-  mrbc_print("ArgumentError\n");	// raise?
+  mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
 }
 
 
@@ -578,8 +591,8 @@ static void c_array_new(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_add(struct VM *vm, mrbc_value v[], int argc)
 {
-  if( mrb_type(v[1]) != MRBC_TT_ARRAY ) {
-    mrbc_print("TypeError\n");	// raise?
+  if( mrbc_type(v[1]) != MRBC_TT_ARRAY ) {
+    mrbc_raise( vm, MRBC_CLASS(TypeError), 0 );
     return;
   }
 
@@ -669,7 +682,7 @@ static void c_array_get(struct VM *vm, mrbc_value v[], int argc)
   /*
     other case
   */
-  mrbc_print("Not support such case in Array#[].\n");
+  mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
   return;
 
  RETURN_NIL:
@@ -686,7 +699,9 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
     in case of self[nth] = val
   */
   if( argc == 2 && mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
-    mrbc_array_set(v, mrbc_integer(v[1]), &v[2]); // raise? IndexError or ENOMEM
+    if( mrbc_array_set(v, mrbc_integer(v[1]), &v[2]) != 0 ) {
+      mrbc_raise( vm, MRBC_CLASS(IndexError), "too small for array");
+    }
     mrbc_type(v[2]) = MRBC_TT_EMPTY;
     return;
   }
@@ -738,7 +753,7 @@ static void c_array_set(struct VM *vm, mrbc_value v[], int argc)
   /*
     other case
   */
-  mrbc_print("Not support such case in Array#[].\n");
+  mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
 }
 
 
@@ -760,7 +775,7 @@ static void c_array_delete_at(struct VM *vm, mrbc_value v[], int argc)
     mrbc_value val = mrbc_array_remove(v, mrbc_integer(v[1]));
     SET_RETURN(val);
   } else {
-    mrbc_print("ArgumentError\n");	// raise?
+    mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
   }
 }
 
@@ -820,7 +835,7 @@ static void c_array_include(struct VM *vm, mrbc_value v[], int argc)
 {
   c_array_index(vm, v, argc);
 
-  SET_BOOL_RETURN( mrb_type(v[0]) == MRBC_TT_INTEGER );
+  SET_BOOL_RETURN( mrbc_type(v[0]) == MRBC_TT_INTEGER );
 }
 
 
@@ -851,7 +866,7 @@ static void c_array_last(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_push(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_array_push(&v[0], &v[1]);	// raise? ENOMEM
+  mrbc_array_push(&v[0], &v[1]);
   mrbc_type(v[1]) = MRBC_TT_EMPTY;
 }
 
@@ -880,8 +895,7 @@ static void c_array_pop(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  // Argument Error. raise?
-  mrbc_print("ArgumentError\n");
+  mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
 }
 
 
@@ -890,7 +904,7 @@ static void c_array_pop(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_array_unshift(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_array_unshift(&v[0], &v[1]);	// raise? IndexError or ENOMEM
+  mrbc_array_unshift(&v[0], &v[1]);
   mrbc_type(v[1]) = MRBC_TT_EMPTY;
 }
 
@@ -929,8 +943,7 @@ static void c_array_shift(struct VM *vm, mrbc_value v[], int argc)
     return;
   }
 
-  // Argument Error. raise?
-  mrbc_print("ArgumentError\n");
+  mrbc_raise( vm, MRBC_CLASS(ArgumentError), 0 );
 }
 
 
@@ -1009,10 +1022,15 @@ static void c_array_minmax(struct VM *vm, mrbc_value v[], int argc)
 
 #if MRBC_USE_STRING
 //================================================================
-/*! (method) inspect
+/*! (method) inspect, to_s
 */
 static void c_array_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( v[0].tt == MRBC_TT_CLASS ) {
+    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    return;
+  }
+
   mrbc_value ret = mrbc_string_new_cstr(vm, "[");
   if( !ret.string ) goto RETURN_NIL;		// ENOMEM
 
@@ -1083,7 +1101,7 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("Array")
-  FILE("method_table_array.h")
+  FILE("_autogen_class_array.h")
 
   METHOD( "new",	c_array_new )
   METHOD( "+",		c_array_add )
@@ -1115,4 +1133,4 @@ static void c_array_join(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "join",	c_array_join )
 #endif
 */
-#include "method_table_array.h"
+#include "_autogen_class_array.h"

@@ -3,15 +3,21 @@
   Constant and global variables.
 
   <pre>
-  Copyright (C) 2015-2021 Kyushu Institute of Technology.
-  Copyright (C) 2015-2021 Shimane IT Open-Innovation Center.
+  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 
   This file is distributed under BSD 3-Clause License.
 
   </pre>
 */
 
+/***** Feature test switches ************************************************/
+/***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
+//@endcond
+
+/***** Local headers ********************************************************/
 #include "value.h"
 #include "global.h"
 #include "keyvalue.h"
@@ -19,10 +25,18 @@
 #include "symbol.h"
 #include "console.h"
 
-
+/***** Constat values *******************************************************/
+/***** Macros ***************************************************************/
+/***** Typedefs *************************************************************/
+/***** Function prototypes **************************************************/
+/***** Local variables ******************************************************/
 static mrbc_kv_handle handle_const;	//!< for global(Object) constants.
 static mrbc_kv_handle handle_global;	//!< for global variables.
 
+/***** Global variables *****************************************************/
+/***** Signal catching functions ********************************************/
+/***** Local functions ******************************************************/
+/***** Global functions *****************************************************/
 
 //================================================================
 /*! initialize const and global table with default value.
@@ -59,7 +73,7 @@ int mrbc_set_const( mrbc_sym sym_id, mrbc_value *v )
   @param  v		pointer to mrbc_value.
   @return		mrbc_error_code.
 */
-int mrbc_set_class_const( const mrbc_class *cls, mrbc_sym sym_id, mrbc_value *v )
+int mrbc_set_class_const( const struct RClass *cls, mrbc_sym sym_id, mrbc_value *v )
 {
   char buf[10];
   mrbc_sym id = cls->sym_id;
@@ -99,7 +113,7 @@ mrbc_value * mrbc_get_const( mrbc_sym sym_id )
   @param  sym_id	symbol ID.
   @return		pointer to mrbc_value or NULL.
 */
-mrbc_value * mrbc_get_class_const( const mrbc_class *cls, mrbc_sym sym_id )
+mrbc_value * mrbc_get_class_const( const struct RClass *cls, mrbc_sym sym_id )
 {
   char buf[10];
   mrbc_sym id = cls->sym_id;
@@ -186,7 +200,7 @@ void mrbc_global_debug_dump(void)
       mrbc_printf(" %04x:%s = ", kv->sym_id, s );
     }
     mrbc_p_sub( &kv->value );
-    if( mrbc_type(kv->value) < MRBC_TT_INC_DEC_THRESHOLD ) {
+    if( mrbc_type(kv->value) <= MRBC_TT_INC_DEC_THRESHOLD ) {
       mrbc_printf(" .tt=%d\n", mrbc_type(kv->value));
     } else {
       mrbc_printf(" .tt=%d refcnt=%d\n", mrbc_type(kv->value), kv->value.obj->ref_count);
@@ -198,9 +212,9 @@ void mrbc_global_debug_dump(void)
   while( mrbc_kv_i_has_next( &ite ) ) {
     mrbc_kv *kv = mrbc_kv_i_next( &ite );
 
-    mrbc_printf(" %04x:%s = ", kv->sym_id, symid_to_str(kv->sym_id));
+    mrbc_printf(" %04x:%s = ", kv->sym_id, mrbc_symid_to_str(kv->sym_id));
     mrbc_p_sub( &kv->value );
-    if( mrbc_type(kv->value) < MRBC_TT_INC_DEC_THRESHOLD ) {
+    if( mrbc_type(kv->value) <= MRBC_TT_INC_DEC_THRESHOLD ) {
       mrbc_printf(" .tt=%d\n", mrbc_type(kv->value));
     } else {
       mrbc_printf(" .tt=%d refcnt=%d\n", mrbc_type(kv->value), kv->value.obj->ref_count);

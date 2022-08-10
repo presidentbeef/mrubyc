@@ -1,13 +1,12 @@
 /*! @file
   @brief
-  exception
+  exception classes
 
   <pre>
-  Copyright (C) 2015-2021 Kyushu Institute of Technology.
-  Copyright (C) 2015-2021 Shimane IT Open-Innovation Center.
+  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 
   This file is distributed under BSD 3-Clause License.
-
 
   </pre>
 */
@@ -17,9 +16,12 @@
 
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
+//@cond
+#include <stdint.h>
+//@endcond
+
 /***** Local headers ********************************************************/
 #include "value.h"
-#include "c_string.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,23 +34,28 @@ extern "C" {
 /***** Typedefs *************************************************************/
 //================================================================
 /*!@brief
-  Define Exception handle.
+  Exception object.
+
+  @extends RBasic
 */
 typedef struct RException {
   MRBC_OBJECT_HEADER;
 
-  struct RClass *cls;			//!< exception class.
-  MRBC_STRING_SIZE_T message_size;	//!< message length.
-  uint8_t *message;			//!< pointer to allocated buffer.
+  struct RClass *cls;		//!< exception class.
+  uint16_t message_size;	//!< message length.
+  const uint8_t *message;	//!< to heap or ROM.
 
 } mrbc_exception;
 
 
 /***** Global variables *****************************************************/
 mrbc_value mrbc_exception_new(struct VM *vm, struct RClass *exc_cls, const void *message, int len);
+mrbc_value mrbc_exception_new_alloc(struct VM *vm, struct RClass *exc_cls, const void *message, int len);
 void mrbc_exception_delete(mrbc_value *value);
-void mrbc_exception_set_message(struct VM *vm, mrbc_value *value, const void *message, int len);
 void mrbc_raise(struct VM *vm, struct RClass *exc_cls, const char *msg);
+void mrbc_raisef(struct VM *vm, struct RClass *exc_cls, const char *fstr, ...);
+void mrbc_print_exception(const mrbc_value *v);
+void mrbc_print_vm_exception(const struct VM *vm);
 
 
 /***** Function prototypes **************************************************/

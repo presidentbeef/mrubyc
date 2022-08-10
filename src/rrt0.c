@@ -3,8 +3,8 @@
   Realtime multitask monitor for mruby/c
 
   <pre>
-  Copyright (C) 2015-2021 Kyushu Institute of Technology.
-  Copyright (C) 2015-2021 Shimane IT Open-Innovation Center.
+  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 
   This file is distributed under BSD 3-Clause License.
   </pre>
@@ -12,11 +12,13 @@
 
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+//@endcond
 
 
 /***** Local headers ********************************************************/
@@ -25,7 +27,6 @@
 #include "class.h"
 #include "global.h"
 #include "symbol.h"
-#include "c_object.h"
 #include "vm.h"
 #include "console.h"
 #include "rrt0.h"
@@ -169,7 +170,7 @@ static void c_sleep(mrbc_vm *vm, mrbc_value v[], int argc)
 
 #if MRBC_USE_FLOAT
   case MRBC_TT_FLOAT:
-    mrbc_sleep_ms(tcb, (mrbc_int)(mrbc_float(v[1]) * 1000));
+    mrbc_sleep_ms(tcb, (mrbc_int_t)(mrbc_float(v[1]) * 1000));
     break;
 #endif
 
@@ -476,8 +477,8 @@ mrbc_tcb* mrbc_create_task(const uint8_t *vm_code, mrbc_tcb *tcb)
   }
 
   if( mrbc_load_mrb(&tcb->vm, vm_code) != 0 ) {
-    mrbc_printf("Error: Illegal bytecode.\n");
     FURI_LOG_I(TAG, "Error: Illegal bytecode.");
+    mrbc_print_vm_exception( &tcb->vm );
     mrbc_vm_close( &tcb->vm );
     return NULL;
   }
@@ -533,16 +534,20 @@ int mrbc_start_task(mrbc_tcb *tcb)
 */
 int mrbc_run(void)
 {
+  int ret = 1;
+
+#if MRBC_SCHEDULER_EXIT
+  if( q_ready_ == NULL && q_waiting_ == NULL && q_suspended_ == NULL ) return 0;
+#endif
+
   while( 1 ) {
     mrbc_tcb *tcb = q_ready_;
-    if( tcb == NULL ) {
-      // 実行すべきタスクなし
+    if( tcb == NULL ) {		// no task to run.
       hal_idle_cpu();
       continue;
     }
 
-    // 実行開始
-    tcb->state = TASKSTATE_RUNNING;
+    tcb->state = TASKSTATE_RUNNING;	// to execute.
     int res = 0;
 
 #ifndef MRBC_NO_TIMER
@@ -554,34 +559,33 @@ int mrbc_run(void)
       tcb->vm.flag_preemption = 1;
       res = mrbc_vm_run(&tcb->vm);
       tcb->timeslice--;
-      if( res < 0 ) break;
+      if( res != 0 ) break;
       if( tcb->state != TASKSTATE_RUNNING ) break;
     }
     mrbc_tick();
 #endif /* ifndef MRBC_NO_TIMER */
 
-    // タスク終了？
-    if( res < 0 ) {
+    // did the task done?
+    if( res != 0 ) {
       hal_disable_irq();
       q_delete_task(tcb);
       tcb->state = TASKSTATE_DORMANT;
       q_insert_task(tcb);
       hal_enable_irq();
-      if (tcb->vm.flag_permanence == 0) mrbc_vm_end(&tcb->vm);
+      if( tcb->vm.flag_permanence == 0 ) mrbc_vm_end(&tcb->vm);
+      if( res != 1 ) ret = res;
 
 #if MRBC_SCHEDULER_EXIT
-      if( q_ready_ == NULL && q_waiting_ == NULL &&
-          q_suspended_ == NULL ) return 0;
+      if( q_ready_ == NULL && q_waiting_ == NULL && q_suspended_ == NULL ) break;
 #endif
       continue;
     }
 
-    // タスク切り替え
+    // switch task.
     hal_disable_irq();
     if( tcb->state == TASKSTATE_RUNNING ) {
       tcb->state = TASKSTATE_READY;
 
-      // タイムスライス終了？
       if( tcb->timeslice == 0 ) {
         q_delete_task(tcb);
         tcb->timeslice = MRBC_TIMESLICE_TICK_COUNT;
@@ -589,8 +593,9 @@ int mrbc_run(void)
       }
     }
     hal_enable_irq();
+  }
 
-  } // eternal loop
+  return ret;
 }
 
 

@@ -12,20 +12,36 @@
 */
 
 
+/***** Feature test switches ************************************************/
+/***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
 #include <stdio.h>
 #include <limits.h>
 #if MRBC_USE_FLOAT
 #include <math.h>
 #endif
+//@endcond
 
+/***** Local headers ********************************************************/
 #include "value.h"
+#include "symbol.h"
+#include "error.h"
 #include "class.h"
-#include "console.h"
-#include "c_numeric.h"
 #include "c_string.h"
+#include "console.h"
 
 
+/***** Constat values *******************************************************/
+/***** Macros ***************************************************************/
+/***** Typedefs *************************************************************/
+/***** Function prototypes **************************************************/
+/***** Local variables ******************************************************/
+/***** Global variables *****************************************************/
+/***** Signal catching functions ********************************************/
+/***** Local functions ******************************************************/
+
+/***** Integer class ********************************************************/
 //================================================================
 /*! (operator) [] bit reference
  */
@@ -34,7 +50,7 @@ static void c_integer_bitref(struct VM *vm, mrbc_value v[], int argc)
   if( mrbc_integer(v[1]) < 0 ) {
     SET_INT_RETURN( 0 );
   } else {
-    mrbc_int mask = (argc == 1) ? 1 : (1 << mrbc_fixnum(v[2])) - 1;
+    mrbc_int_t mask = (argc == 1) ? 1 : (1 << mrbc_fixnum(v[2])) - 1;
     SET_INT_RETURN( (mrbc_fixnum(v[0]) >> mrbc_fixnum(v[1])) & mask );
   }
 }
@@ -54,7 +70,7 @@ static void c_integer_positive(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_integer_negative(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_int num = mrbc_integer(v[0]);
+  mrbc_int_t num = mrbc_integer(v[0]);
   SET_INT_RETURN( -num );
 }
 
@@ -65,7 +81,7 @@ static void c_integer_negative(struct VM *vm, mrbc_value v[], int argc)
 static void c_integer_power(struct VM *vm, mrbc_value v[], int argc)
 {
   if( mrbc_type(v[1]) == MRBC_TT_INTEGER ) {
-    mrbc_int x = 1;
+    mrbc_int_t x = 1;
     int i;
 
     if( mrbc_integer(v[1]) < 0 ) x = 0;
@@ -88,7 +104,7 @@ static void c_integer_power(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_integer_mod(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_int num = mrbc_integer(v[1]);
+  mrbc_int_t num = mrbc_integer(v[1]);
   SET_INT_RETURN( v->i % num );
 }
 
@@ -98,7 +114,7 @@ static void c_integer_mod(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_integer_and(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_int num = mrbc_integer(v[1]);
+  mrbc_int_t num = mrbc_integer(v[1]);
   SET_INT_RETURN(v->i & num);
 }
 
@@ -108,7 +124,7 @@ static void c_integer_and(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_integer_or(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_int num = mrbc_integer(v[1]);
+  mrbc_int_t num = mrbc_integer(v[1]);
   SET_INT_RETURN(v->i | num);
 }
 
@@ -118,7 +134,7 @@ static void c_integer_or(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_integer_xor(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_int num = mrbc_integer(v[1]);
+  mrbc_int_t num = mrbc_integer(v[1]);
   SET_INT_RETURN( v->i ^ num );
 }
 
@@ -128,7 +144,7 @@ static void c_integer_xor(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_integer_not(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_int num = mrbc_integer(v[0]);
+  mrbc_int_t num = mrbc_integer(v[0]);
   SET_INT_RETURN( ~num );
 }
 
@@ -136,10 +152,10 @@ static void c_integer_not(struct VM *vm, mrbc_value v[], int argc)
 //================================================================
 /*! x-bit left shift for x
  */
-static mrbc_int shift(mrbc_int x, mrbc_int y)
+static mrbc_int_t shift(mrbc_int_t x, mrbc_int_t y)
 {
   // Don't support environments that include padding in int.
-  const int INT_BITS = sizeof(mrbc_int) * CHAR_BIT;
+  const int INT_BITS = sizeof(mrbc_int_t) * CHAR_BIT;
 
   if( y >= INT_BITS ) return 0;
   if( y >= 0 ) return x << y;
@@ -185,7 +201,7 @@ static void c_integer_abs(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_integer_to_f(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_float f = mrbc_integer(v[0]);
+  mrbc_float_t f = mrbc_integer(v[0]);
   SET_FLOAT_RETURN( f );
 }
 #endif
@@ -205,15 +221,21 @@ static void c_integer_chr(struct VM *vm, mrbc_value v[], int argc)
 
 
 //================================================================
-/*! (method) to_s
+/*! (method) inspect, to_s
 */
-static void c_integer_to_s(struct VM *vm, mrbc_value v[], int argc)
+static void c_integer_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( v[0].tt == MRBC_TT_CLASS ) {
+    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    return;
+  }
+
   int base = 10;
   if( argc ) {
     base = mrbc_integer(v[1]);
     if( base < 2 || base > 36 ) {
-      return;	// raise ? ArgumentError
+      mrbc_raisef(vm, MRBC_CLASS(ArgumentError), "invalid radix %d", base);
+      return;
     }
   }
 
@@ -233,7 +255,7 @@ static void c_integer_to_s(struct VM *vm, mrbc_value v[], int argc)
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("Integer")
-  FILE("method_table_integer.h")
+  FILE("_autogen_class_integer.h")
 
   METHOD( "[]",		c_integer_bitref )
   METHOD( "+@",		c_integer_positive )
@@ -253,15 +275,15 @@ static void c_integer_to_s(struct VM *vm, mrbc_value v[], int argc)
 #endif
 #if MRBC_USE_STRING
   METHOD( "chr",	c_integer_chr )
-  METHOD( "inspect",	c_integer_to_s )
-  METHOD( "to_s",	c_integer_to_s )
+  METHOD( "inspect",	c_integer_inspect )
+  METHOD( "to_s",	c_integer_inspect )
 #endif
 */
-#include "method_table_integer.h"
+#include "_autogen_class_integer.h"
 
 
 
-// Float
+/***** Float class **********************************************************/
 #if MRBC_USE_FLOAT
 
 //================================================================
@@ -278,7 +300,7 @@ static void c_float_positive(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_float_negative(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_float num = mrbc_float(v[0]);
+  mrbc_float_t num = mrbc_float(v[0]);
   SET_FLOAT_RETURN( -num );
 }
 
@@ -289,7 +311,7 @@ static void c_float_negative(struct VM *vm, mrbc_value v[], int argc)
  */
 static void c_float_power(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_float n = 0;
+  mrbc_float_t n = 0;
   switch( mrbc_type(v[1]) ) {
   case MRBC_TT_INTEGER:	n = mrbc_integer(v[1]);	break;
   case MRBC_TT_FLOAT:	n = mrbc_float(v[1]);	break;
@@ -317,17 +339,22 @@ static void c_float_abs(struct VM *vm, mrbc_value v[], int argc)
 */
 static void c_float_to_i(struct VM *vm, mrbc_value v[], int argc)
 {
-  mrbc_int i = (mrbc_int)mrbc_float(v[0]);
+  mrbc_int_t i = (mrbc_int_t)mrbc_float(v[0]);
   SET_INT_RETURN( i );
 }
 
 
 #if MRBC_USE_STRING
 //================================================================
-/*! (method) to_s
+/*! (method) inspect, to_s
 */
-static void c_float_to_s(struct VM *vm, mrbc_value v[], int argc)
+static void c_float_inspect(struct VM *vm, mrbc_value v[], int argc)
 {
+  if( v[0].tt == MRBC_TT_CLASS ) {
+    v[0] = mrbc_string_new_cstr(vm, mrbc_symid_to_str( v[0].cls->sym_id ));
+    return;
+  }
+
   char buf[16];
 
   snprintf( buf, sizeof(buf), "%g", v->d );
@@ -340,7 +367,7 @@ static void c_float_to_s(struct VM *vm, mrbc_value v[], int argc)
 /* MRBC_AUTOGEN_METHOD_TABLE
 
   CLASS("Float")
-  FILE("method_table_float.h")
+  FILE("_autogen_class_float.h")
 
   METHOD( "+@",		c_float_positive )
   METHOD( "-@",		c_float_negative )
@@ -351,10 +378,10 @@ static void c_float_to_s(struct VM *vm, mrbc_value v[], int argc)
   METHOD( "to_i",	c_float_to_i )
   METHOD( "to_f",	c_ineffect )
 #if MRBC_USE_STRING
-  METHOD( "inspect",	c_float_to_s )
-  METHOD( "to_s",	c_float_to_s )
+  METHOD( "inspect",	c_float_inspect )
+  METHOD( "to_s",	c_float_inspect )
 #endif
 */
-#include "method_table_float.h"
+#include "_autogen_class_float.h"
 
 #endif  // MRBC_USE_FLOAT

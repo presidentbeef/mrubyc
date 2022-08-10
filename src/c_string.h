@@ -3,8 +3,8 @@
   mruby/c String class
 
   <pre>
-  Copyright (C) 2015-2021 Kyushu Institute of Technology.
-  Copyright (C) 2015-2021 Shimane IT Open-Innovation Center.
+  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 
   This file is distributed under BSD 3-Clause License.
 
@@ -15,11 +15,12 @@
 #define MRBC_SRC_C_STRING_H_
 
 /***** Feature test switches ************************************************/
-#include "vm_config.h"
-
 /***** System headers *******************************************************/
+//@cond
+#include "vm_config.h"
 #include <stdint.h>
 #include <string.h>
+//@endcond
 
 /***** Local headers ********************************************************/
 #include "value.h"
@@ -39,7 +40,9 @@ extern "C" {
 /***** Typedefs *************************************************************/
 //================================================================
 /*!@brief
-  Define String handle.
+  String object.
+
+  @extends RBasic
 */
 typedef struct RString {
   MRBC_OBJECT_HEADER;

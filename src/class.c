@@ -3,8 +3,8 @@
   Class related functions.
 
   <pre>
-  Copyright (C) 2015-2021 Kyushu Institute of Technology.
-  Copyright (C) 2015-2021 Shimane IT Open-Innovation Center.
+  Copyright (C) 2015-2022 Kyushu Institute of Technology.
+  Copyright (C) 2015-2022 Shimane IT Open-Innovation Center.
 
   This file is distributed under BSD 3-Clause License.
 
@@ -13,25 +13,27 @@
 
 /***** Feature test switches ************************************************/
 /***** System headers *******************************************************/
+//@cond
 #include "vm_config.h"
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+//@endcond
 
 /***** Local headers ********************************************************/
 #include "alloc.h"
 #include "value.h"
-#include "vm.h"
-#include "class.h"
 #include "symbol.h"
+#include "error.h"
 #include "keyvalue.h"
-#include "global.h"
-#include "console.h"
-#include "load.h"
-#include "c_object.h"
+#include "class.h"
 #include "c_string.h"
 #include "c_array.h"
 #include "c_hash.h"
+#include "global.h"
+#include "vm.h"
+#include "load.h"
+#include "console.h"
 
 
 /***** Constant values ******************************************************/
@@ -77,7 +79,11 @@ mrbc_class * const mrbc_class_tbl[MRBC_TT_MAXVAL+1] = {
 */
 mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *super)
 {
-  mrbc_sym sym_id = str_to_symid(name);
+  mrbc_sym sym_id = mrbc_str_to_symid(name);
+  if( sym_id < 0 ) {
+    mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
+    return 0;
+  }
 
   // already defined?
   mrbc_value *val = mrbc_get_const(sym_id);
@@ -92,13 +98,13 @@ mrbc_class * mrbc_define_class(struct VM *vm, const char *name, mrbc_class *supe
 
   cls->sym_id = sym_id;
   cls->num_builtin_method = 0;
-#ifdef MRBC_DEBUG
-  cls->names = name;	// for debug; delete soon.
-#endif
   cls->super = super ? super : mrbc_class_object;
   cls->method_link = 0;
+#if defined(MRBC_DEBUG)
+  cls->name = name;
+#endif
 
-  if( vm && vm->callinfo_tail != NULL ) {
+  if( vm && mrbc_type(vm->cur_regs[0]) == MRBC_TT_CLASS ) {
     // For nested class
     //   so, not in TOPLEVEL, register to class constant
     assert(vm->target_class);
@@ -130,7 +136,10 @@ void mrbc_define_method(struct VM *vm, mrbc_class *cls, const char *name, mrbc_f
 
   method->type = 'm';
   method->c_func = 1;
-  method->sym_id = str_to_symid( name );
+  method->sym_id = mrbc_str_to_symid( name );
+  if( method->sym_id < 0 ) {
+    mrbc_raise(vm, MRBC_CLASS(Exception), "Overflow MAX_SYMBOLS_COUNT");
+  }
   method->func = cfunc;
   method->next = cls->method_link;
   cls->method_link = method;
@@ -282,7 +291,7 @@ void mrbc_proc_clear_vm_id(mrbc_value *v)
   @param  cls	class
   @return	result
 */
-int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrb_class *cls )
+int mrbc_obj_is_kind_of( const mrbc_value *obj, const mrbc_class *cls )
 {
   const mrbc_class *c = find_class_by_object( obj );
   while( c != NULL ) {
@@ -354,11 +363,14 @@ mrbc_method * mrbc_find_method( mrbc_method *r_method, mrbc_class *cls, mrbc_sym
 */
 mrbc_class * mrbc_get_class_by_name( const char *name )
 {
-  mrbc_sym sym_id = str_to_symid(name);
-  mrbc_value *obj = mrbc_get_const(sym_id);
+  mrbc_sym sym_id = mrbc_search_symid(name);
+  if( sym_id < 0 ) return NULL;
 
+  mrbc_value *obj = mrbc_get_const(sym_id);
   if( obj == NULL ) return NULL;
-  return (mrbc_type(*obj) == MRBC_TT_CLASS) ? obj->cls : NULL;
+  if( mrbc_type(*obj) != MRBC_TT_CLASS ) return NULL;
+
+  return obj->cls;
 }
 
 
@@ -388,7 +400,7 @@ mrbc_value mrbc_send( struct VM *vm, mrbc_value *v, int reg_ofs,
   mrbc_method method;
 
   if( mrbc_find_method( &method, find_class_by_object(recv),
-			str_to_symid(method_name) ) == 0 ) {
+			mrbc_str_to_symid(method_name) ) == 0 ) {
     mrbc_printf("No method. vtype=%d method='%s'\n", mrbc_type(*recv), method_name );
     goto ERROR;
   }
@@ -440,23 +452,31 @@ void c_ineffect(struct VM *vm, mrbc_value v[], int argc)
 
 //================================================================
 /*! Run mrblib, which is mruby bytecode
+
+  @param  bytecode	bytecode (.mrb file)
+  @return		dummy yet.
 */
-static void mrbc_run_mrblib(const uint8_t bytecode[])
+int mrbc_run_mrblib(const void *bytecode)
 {
   // instead of mrbc_vm_open()
   mrbc_vm *vm = mrbc_alloc( 0, sizeof(mrbc_vm) );
-  if( !vm ) return;	// ENOMEM
+  if( !vm ) return -1;	// ENOMEM
   memset(vm, 0, sizeof(mrbc_vm));
 
-  mrbc_load_mrb(vm, bytecode);
+  if( mrbc_load_mrb(vm, bytecode) ) {
+    mrbc_print_exception(&vm->exception);
+    return 2;
+  }
   mrbc_vm_begin(vm);
-  mrbc_vm_run(vm);
+  int ret = mrbc_vm_run(vm);
   mrbc_vm_end(vm);
 
   // instead of mrbc_vm_close()
   mrbc_raw_free( vm->top_irep );	// free only top-level mrbc_irep.
 					// (no need to free child ireps.)
   mrbc_raw_free( vm );
+
+  return ret;
 }
 
 

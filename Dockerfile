@@ -1,4 +1,4 @@
-from ruby:3.0.0-slim
+from ruby:3.1.2-slim
 
 RUN apt update && apt -y upgrade
 RUN apt install -y \
@@ -9,12 +9,12 @@ RUN apt install -y \
   make \
   qemu \
   qemu-kvm \
-  qemu-system-arm
+  qemu-user-static
 
 RUN gem update --system
 
 ARG USER_ID
-RUN useradd -m -u $USER_ID mrubyc
+RUN if [ $USER_ID -eq 0 ]; then export USER_ID=1000; fi && useradd -m -u $USER_ID mrubyc
 RUN mkdir /work && chown mrubyc /work
 
 USER mrubyc
@@ -25,10 +25,11 @@ COPY --chown=mrubyc Gemfile.lock /work/mrubyc/
 
 USER root
 WORKDIR /work/mrubyc
+RUN gem i bundler
 RUN bundle install
 
 USER mrubyc
-ENV CFLAGS="-DMRBC_USE_MATH=1 -DMAX_SYMBOLS_COUNT=500"
+ENV CFLAGS="-DMRBC_USE_MATH=1 -DMAX_SYMBOLS_COUNT=1000"
 
 RUN git clone https://github.com/mruby/mruby /work/mruby
 ARG MRUBY_TAG

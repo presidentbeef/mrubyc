@@ -31,9 +31,6 @@ endif
 ifdef MRBC_USE_HAL_FLIPPER
    HAL_DIR = hal_flipper
 endif
-ifdef MRBC_USE_HAL_USER_RESERVED
-  HAL_DIR = hal_user_reserved
-endif
 
 ifndef HAL_DIR
   HAL_DIR = hal_posix
