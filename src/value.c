@@ -79,10 +79,6 @@ int mrbc_compare(const mrbc_value *v1, const mrbc_value *v2)
   mrbc_float_t d1, d2;
 #endif
 
-  // to compare Symbols
-  const char *str1, *str2;
-  int diff, len, res;
-
   // if TT_XXX is different
   if( mrbc_type(*v1) != mrbc_type(*v2) ) {
 #if MRBC_USE_FLOAT
