@@ -822,7 +822,7 @@ static inline void op_getupvar( mrbc_vm *vm, mrbc_value *regs EXT )
   assert( mrbc_type(regs[0]) == MRBC_TT_PROC );
   mrbc_callinfo *callinfo = regs[0].proc->callinfo;
 
-  int i;
+  unsigned int i;
   for( i = 0; i < c; i++ ) {
     assert( callinfo );
     mrbc_value *reg0 = callinfo->cur_regs + callinfo->reg_offset;
@@ -856,7 +856,7 @@ static inline void op_setupvar( mrbc_vm *vm, mrbc_value *regs EXT )
   assert( regs[0].tt == MRBC_TT_PROC );
   mrbc_callinfo *callinfo = regs[0].proc->callinfo;
 
-  int i;
+  unsigned int i;
   for( i = 0; i < c; i++ ) {
     assert( callinfo );
     mrbc_value *reg0 = callinfo->cur_regs + callinfo->reg_offset;
@@ -2055,7 +2055,7 @@ static inline void op_array2( mrbc_vm *vm, mrbc_value *regs EXT )
   mrbc_value value = mrbc_array_new(vm, c);
   if( value.array == NULL ) return;  // ENOMEM
 
-  int i;
+  unsigned int i;
   for( i = 0; i < c; i++ ) {
     mrbc_incref( &regs[b+i] );
     value.array->data[i] = regs[b+i];
